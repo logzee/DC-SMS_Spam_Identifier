@@ -11,6 +11,7 @@ from nltk import sent_tokenize, word_tokenize
 import string
 import matplotlib.pyplot as plt
 import pip
+from DC7.DC7new import clean_text, stematize_sentence, term_count, term_frequency, inverse_document_frequency, tf_idf
 
 # Preping the Data
 df = pd.read_excel('spam 2.xlsx')
