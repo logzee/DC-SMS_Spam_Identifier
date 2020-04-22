@@ -6,8 +6,8 @@ from nltk import word_tokenize
 from nltk import WordNetLemmatizer
 import string
 
-path = '/Users/alinajam/Desktop/smsspamcollection/SMSSpamCollection.xlsx'
-data = pd.read_excel(path)
+path = '/Users/alinajam/Desktop/smsspamcollection/SMSSpamCollection.csv'
+data = pd.read_csv(path)
 
 def clean_text(unprocessed_string):
     stop_words = stopwords.words()
@@ -97,16 +97,16 @@ def tf_idf(corpus):
     return output_extracted_features
 
 
-rowIndex = 0
-docFrequences = []
-for article in data.iloc[:, 9]:
-    processedArticle = clean_text(article)
-    processedArticle = stematize_sentence(processedArticle)
-    processedArticle = clean_text(processedArticle)
-    processedArticle = stematize_sentence(processedArticle)
-    data.iloc[rowIndex, 9] = processedArticle
-    rowIndex += 1
-
-TF_IDF_Features = tf_idf(data.iloc[:, 9])
-data['TF-IDF features'] = TF_IDF_Features
-print(data)
+# rowIndex = 0
+# docFrequences = []
+# for article in data.iloc[:, 9]:
+#     processedArticle = clean_text(article)
+#     processedArticle = stematize_sentence(processedArticle)
+#     processedArticle = clean_text(processedArticle)
+#     processedArticle = stematize_sentence(processedArticle)
+#     data.iloc[rowIndex, 9] = processedArticle
+#     rowIndex += 1
+#
+# TF_IDF_Features = tf_idf(data.iloc[:, 9])
+# data['TF-IDF features'] = TF_IDF_Features
+# print(data)
