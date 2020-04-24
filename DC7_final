@@ -1,0 +1,99 @@
+import pandas as pd
+import string
+import numpy as np
+from nltk.corpus import stopwords
+from nltk import word_tokenize
+from nltk.stem import SnowballStemmer
+from nltk import WordNetLemmatizer
+from sklearn.metrics import precision_score, recall_score
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
+
+
+smsData = pd.read_csv('text - spam 2.csv')
+
+
+def clean_text(unprocessed_string):
+    stop_words = stopwords.words()
+    cleaned_text = ""
+    unprocessed_string = np.str.lower(unprocessed_string)
+    unprocessed_string = np.str.replace(unprocessed_string, "'", "")
+
+    text_tokens = word_tokenize(unprocessed_string)
+    for word in text_tokens:
+        if word not in string.punctuation:
+            if word not in stop_words:
+                if len(word) > 1:
+                    cleaned_text = cleaned_text + " " + word
+    cleaned_text = ("").join(cleaned_text)
+    return cleaned_text
+
+
+def stematize_sentence(sentence):
+    sb_stemmer = SnowballStemmer('english')
+    wordnet_lemmatizer = WordNetLemmatizer()
+
+    token_words = word_tokenize(sentence)
+    stem_sentence = []
+    for word in token_words:
+        lem_word = wordnet_lemmatizer.lemmatize(word)
+        stem_sentence.append(sb_stemmer.stem(lem_word))
+        stem_sentence.append(" ")
+    return "".join(stem_sentence)
+
+
+def remove_non_ascii(text):
+    return ''.join(i for i in text if ord(i)<128)
+
+
+for text in range(len(smsData)):
+    cleaned_text = remove_non_ascii(smsData.iloc[text, 1])
+    cleaned_text = clean_text(cleaned_text)
+    cleaned_text = cleaned_text.strip()
+    cleaned_text = stematize_sentence(cleaned_text)
+    cleaned_text = clean_text(cleaned_text)
+    cleaned_text = stematize_sentence(cleaned_text)
+    if smsData.iloc[text, 0] == 'ham':
+        smsData.iloc[text, 0] = 1
+    else:
+        smsData.iloc[text, 0] = 0
+
+    smsData.iloc[text, 1] = cleaned_text
+
+smsTrain = smsData.iloc[0:1100, :]
+smsTest = smsData.iloc[1101:, :]
+
+vectorizer = TfidfVectorizer()
+
+Train = vectorizer.fit_transform(smsTrain.iloc[:,1])
+Train_dense = Train.todense()
+Test = vectorizer.transform(smsTest.iloc[:,1])
+Test_dense = Test.todense()
+
+gNB = GaussianNB()
+mnNB = MultinomialNB()
+
+gNB.fit(Train_dense, smsTrain.iloc[:, 0].astype('int'))
+mnNB.fit(Train_dense, smsTrain.iloc[:, 0].astype('int'))
+
+gnb_predictions = gNB.predict(Test_dense)
+mnnb_predictions = mnNB.predict(Test_dense)
+
+gnb_accuracy = 0
+mnnb_accuracy = 0
+for index in range(len(smsTest)):
+    if gnb_predictions[index] == smsTest.iloc[index, 0]:
+        gnb_accuracy += 1
+    if mnnb_predictions[index] == smsTest.iloc[index, 0]:
+        mnnb_accuracy += 1
+
+
+print('Gaussian Naive Bayes Classifier')
+print('Accuracy: ', gnb_accuracy / len(smsTest.iloc[:, 1]))
+print('Precision: ', precision_score(smsTest.iloc[:, 0].astype('int'), gnb_predictions.astype('int')))
+print('Recall: ', recall_score(smsTest.iloc[:, 0].astype('int'), gnb_predictions.astype('int')))
+
+print('Multi-nomial Naive Bayes Classifier')
+print('Accuracy: ', mnnb_accuracy / len(smsTest))
+print('Precision: ', precision_score(smsTest.iloc[:, 0].astype('int'), mnnb_predictions.astype('int')))
+print('Recall: '), recall_score(smsTest.iloc[:, 0].astype('int'), mnnb_predictions.astype('int'))
